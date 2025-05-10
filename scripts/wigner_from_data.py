@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sun May 11 01:46:39 2025
+
+@author: Somesh
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Sat May 10 18:07:32 2025
 
 @author: Somesh
@@ -13,16 +20,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def wigner_from_state(rho_in,
-           xv, yv):
-    
-    #Define Wigner Function
-    def w(state, xv, xy):
-        return jnp.pi/2*dq.wigner(state, xmax = xv.max(), ymax = yv.max(), npixels = len(xv))[2]
+def wigner_from_data(wigner_measurements,
+                     xv, yv,
+                     dim):
     
     #============================================================
     #Define Preliminary Data
-    dim = rho_in.dims[0]
     fac = 5
     
     #Check if dim has correct properties:
@@ -30,7 +33,7 @@ def wigner_from_state(rho_in,
         raise('Dimension is not integer')
     
     #Compute measurement data
-    w_k = w(rho_in, xv, yv).flatten()
+    w_k = wigner_measurements.flatten()
     
     #Define Observables
     alpha = xv.flatten() + yv.flatten()*1j
@@ -56,25 +59,8 @@ def wigner_from_state(rho_in,
     
     # Output estimated density matrix
     rho_out = rho.value
-    #Compute Fidelity
-    fidelity = dq.fidelity(rho_in, rho_out)
     
-    return rho_out, fidelity
-
-fock_state = dq.fock(10, 1)
-coherent_state = dq.coherent(3, 0.5)
-
-n = 10
-nx, ny = (n, n)
-x = jnp.linspace(-1.5, 1.5, nx)
-y = jnp.linspace(-1.5, 1.5, ny)
-xv, yv = jnp.meshgrid(x, y)
-
-rho_out, fidelity = wigner_from_state(fock_state, xv, yv)
-
-print(fidelity)
-dq.plot.wigner(fock_state)
-dq.plot.wigner(rho_out)
+    return rho_out
 
     
         
