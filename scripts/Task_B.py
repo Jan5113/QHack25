@@ -34,6 +34,7 @@ print(len(w_k))
 alpha = (xv + yv*1j).flatten()
 E_list = 1/2*(dq.eye(dim) + dq.displace(dim, alpha)@dq.parity(dim)@dq.dag(dq.displace(dim, alpha)))
 
+
 # Define variables
 rho = cp.Variable((dim, dim), hermitian=True)
 
@@ -48,8 +49,7 @@ constraints = [rho >> 0, cp.trace(rho) == 1]
 print('Problem Solving')
 # Solve problem
 prob = cp.Problem(objective, constraints)
-prob.solve(solver=cp.MOSEK,
-           verbose = True)  # or use MOSEK if available
+prob.solve(solver=cp.MOSEK, verbose = True)  # or use MOSEK if available
 
 # Output estimated density matrix
 rho_est = rho.value
