@@ -11,10 +11,16 @@ import jax.numpy as jnp
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import jax
 
+
+def add_gaussian_noise(wigner, sigma):
+    noise = sigma*jax.random.normal(jax.random.key(0), wigner.shape)
+    return jnp.add(wigner, noise)
 
 def wigner_from_state(rho_in,
-           xv, yv):
+           xv, yv,
+           sigma):
     
     #Define Wigner Function
     def w(state, xv, xy):
@@ -30,7 +36,7 @@ def wigner_from_state(rho_in,
         raise('Dimension is not integer')
     
     #Compute measurement data
-    w_k = w(rho_in, xv, yv).flatten()
+    w_k = add_gaussian_noise(w(rho_in, xv, yv), sigma).flatten()
     
     #Define Observables
     alpha = xv.flatten() + yv.flatten()*1j
@@ -52,7 +58,7 @@ def wigner_from_state(rho_in,
     
     # Solve problem
     prob = cp.Problem(objective, constraints)
-    prob.solve(solver=cp.MOSEK, verbose = True)
+    prob.solve(solver=cp.MOSEK)
     
     # Output estimated density matrix
     rho_out = rho.value
@@ -61,20 +67,39 @@ def wigner_from_state(rho_in,
     
     return rho_out, fidelity
 
-fock_state = dq.fock(10, 1)
+a = 0.5
+fock_state = dq.fock(5, 1)
 coherent_state = dq.coherent(3, 0.5)
+cat_state = dq.coherent(3, a) + dq.coherent(3, -a)
+cat_state = cat_state/dq.norm(cat_state)
 
 n = 10
 nx, ny = (n, n)
-x = jnp.linspace(-1.5, 1.5, nx)
-y = jnp.linspace(-1.5, 1.5, ny)
+xmax = 2
+x = jnp.linspace(-xmax, xmax, nx)
+y = jnp.linspace(-xmax, xmax, ny)
 xv, yv = jnp.meshgrid(x, y)
 
-rho_out, fidelity = wigner_from_state(fock_state, xv, yv)
+fidelity_fock = []
+fidelity_coherent = []
+fidelity_cat = []
 
-print(fidelity)
-dq.plot.wigner(fock_state)
-dq.plot.wigner(rho_out)
+for sigma in jnp.linspace(0, 1, 10):
+    print(sigma)
+    rho_out_fock, fidelity_fock_step = wigner_from_state(fock_state, xv, yv, sigma)
+    rho_out_coherent, fidelity_coherent_step = wigner_from_state(coherent_state, xv, yv, sigma)
+    rho_out_cat, fidelity_cat_step = wigner_from_state(cat_state, xv, yv, sigma)
+    fidelity_fock.append(fidelity_fock_step)
+    fidelity_coherent.append(fidelity_coherent_step)
+    fidelity_cat.append(fidelity_cat_step)
+    
+fig, ax = plt.subplots()
+ax.plot(jnp.linspace(0, 1, 10), fidelity_fock, c = 'green')
+ax.plot(jnp.linspace(0, 1, 10), fidelity_coherent, c = 'blue')
+ax.plot(jnp.linspace(0, 1, 10), fidelity_cat, c = 'red')
+    
+    
+    
 
     
         
