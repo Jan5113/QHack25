@@ -29,7 +29,7 @@ xv, yv = jnp.meshgrid(x, y)
 
 for k in range(2, 5):
     for l in range(5):
-        state = dq.coherent(k, 0.5 + l/2) + dq.coherent(k, -0.5 - l/2)
+        state = dq.fock(k, l)
         state = state/dq.norm(state)
         fidelity = []
         print(k, l)
@@ -42,7 +42,7 @@ for k in range(2, 5):
         ax.set_xlabel('Noise [\sigma]')
         ax.set_ylabel('Fidelity')
         ax.set_title(f'Noise-Fidelity Plot for Cat State ({k}, {0.5+l/2})')
-        plt.savefig("C:/Users/Somesh/OneDrive/Documents/ETH/10._Semester/50_Fun/QHC/QHack25/Images/Task_1_C_Cat/Cat_"+str(k)+"_"+str(l)+".png", dpi = 200)
+        # plt.savefig("C:/Users/Somesh/OneDrive/Documents/ETH/10._Semester/50_Fun/QHC/QHack25/Images/Task_1_C_Cat/Cat_"+str(k)+"_"+str(l)+".png", dpi = 200)
         plt.show()
 
 # fidelity_fock = []
