@@ -14,8 +14,9 @@ import numpy as np
 
 
 def wigner_from_state(rho_in,
-           xv, yv):
+           x_vec, y_vec):
     
+    xv, yv = jnp.meshgrid(x_vec, y_vec)
     #Define Wigner Function
     def w(state, xv, xy):
         return jnp.pi/2*dq.wigner(state, xmax = xv.max(), ymax = yv.max(), npixels = len(xv))[2]
@@ -23,7 +24,7 @@ def wigner_from_state(rho_in,
     #============================================================
     #Define Preliminary Data
     dim = rho_in.dims[0]
-    fac = 5
+    fac = 10
     
     #Check if dim has correct properties:
     if type(dim)!=int:
@@ -33,7 +34,7 @@ def wigner_from_state(rho_in,
     w_k = w(rho_in, xv, yv).flatten()
     
     #Define Observables
-    alpha = xv.flatten() + yv.flatten()*1j
+    alpha = (xv.T + yv.T*1j).flatten()
     E_list = (dq.displace(dim*fac, alpha)@dq.parity(dim*fac)@dq.dag(dq.displace(dim*fac, alpha))).data[:, :dim, :dim]
     
     #===============================================================
@@ -60,21 +61,5 @@ def wigner_from_state(rho_in,
     fidelity = dq.fidelity(rho_in, rho_out)
     
     return rho_out, fidelity
-
-fock_state = dq.fock(10, 1)
-coherent_state = dq.coherent(3, 0.5)
-
-n = 10
-nx, ny = (n, n)
-x = jnp.linspace(-1.5, 1.5, nx)
-y = jnp.linspace(-1.5, 1.5, ny)
-xv, yv = jnp.meshgrid(x, y)
-
-rho_out, fidelity = wigner_from_state(fock_state, xv, yv)
-
-print(fidelity)
-dq.plot.wigner(fock_state)
-dq.plot.wigner(rho_out)
-
     
         

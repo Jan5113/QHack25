@@ -21,22 +21,19 @@ import numpy as np
 
 
 def wigner_from_data(wigner_measurements,
-                     xv, yv,
+                     xvec, yvec,
                      dim):
     
     #============================================================
     #Define Preliminary Data
     fac = 5
-    
-    #Check if dim has correct properties:
-    if type(dim)!=int:
-        raise('Dimension is not integer')
+    xv, yv = jnp.meshgrid(xvec, yvec)
     
     #Compute measurement data
-    w_k = wigner_measurements.flatten()
+    w_k = jnp.pi/2*wigner_measurements.flatten()
     
     #Define Observables
-    alpha = xv.flatten() + yv.flatten()*1j
+    alpha = (xv.T + yv.T*1j).flatten()
     E_list = (dq.displace(dim*fac, alpha)@dq.parity(dim*fac)@dq.dag(dq.displace(dim*fac, alpha))).data[:, :dim, :dim]
     
     #===============================================================
@@ -61,6 +58,12 @@ def wigner_from_data(wigner_measurements,
     rho_out = rho.value
     
     return rho_out
+
+state = dq.fock(5, 1)
+data = dq.wigner(state, xmax = 2, ymax = 2, npixels = 10)
+rho_out = wigner_from_data(data[2], data[0], data[1], 5)
+fidelity = dq.fidelity(state, rho_out)
+
 
     
         
