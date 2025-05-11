@@ -20,7 +20,8 @@ def add_gaussian_noise(wigner, sigma):
 
 def wigner_from_state(rho_in,
            xv, yv,
-           sigma):
+           sigma,
+           optimization_type = 'Least-Squares'):
     
     #Define Wigner Function
     def w(state, xv, xy):
@@ -54,8 +55,10 @@ def wigner_from_state(rho_in,
     # Objective
     exprs = cp.hstack([cp.real(cp.trace(E@rho)) - k for E, k in zip(E_list, w_k)])
     
-    # objective = cp.Minimize(cp.sum_squares(exprs))
-    objective = cp.Minimize(cp.sum(cp.huber(exprs)))
+    if optimization_type == 'Least-Squares':
+        objective = cp.Minimize(cp.sum_squares(exprs))
+    if optimization_type == 'Huber':
+        objective = cp.Minimize(cp.sum(cp.huber(exprs)))
     
     # print(objective)
     
@@ -74,37 +77,45 @@ def wigner_from_state(rho_in,
     return rho_out, fidelity
 
 # a = 0.5
-# fock_state = dq.fock(5, 1)
+fock_state = dq.fock(5, 1)
 # coherent_state = dq.coherent(3, 0.5)
 # cat_state = dq.coherent(3, a) + dq.coherent(3, -a)
 # cat_state = cat_state/dq.norm(cat_state)
 
-# n = 10
-# nx, ny = (n, n)
-# xmax = 2
-# x = jnp.linspace(-xmax, xmax, nx)
-# y = jnp.linspace(-xmax, xmax, ny)
-# xv, yv = jnp.meshgrid(x, y)
+n = 10
+nx, ny = (n, n)
+xmax = 2
+x = jnp.linspace(-xmax, xmax, nx)
+y = jnp.linspace(-xmax, xmax, ny)
+xv, yv = jnp.meshgrid(x, y)
 
-# fidelity_fock = []
+fidelity_fock = []
+fidelity_fock_huber = []
 # fidelity_coherent = []
 # fidelity_cat = []
 
 # # dq.plot.wigner(coherent_state)
 # # dq.plot.wigner(cat_state)
-# for sigma in jnp.linspace(0, 1, 10):
-#     print(sigma)
-#     rho_out_fock, fidelity_fock_step = wigner_from_state(fock_state, xv, yv, sigma)
-#     rho_out_coherent, fidelity_coherent_step = wigner_from_state(coherent_state, xv, yv, sigma)
-#     # dq.plot.wigner(rho_out_coherent)
-#     rho_out_cat, fidelity_cat_step = wigner_from_state(cat_state, xv, yv, sigma)
-#     # dq.plot.wigner(rho_out_cat)
-#     fidelity_fock.append(fidelity_fock_step)
-#     fidelity_coherent.append(fidelity_coherent_step)
-#     fidelity_cat.append(fidelity_cat_step)
+sigmas = jnp.linspace(0, 1, 20)
+for sigma in sigmas:
+    print(sigma)
+    rho_out_fock, fidelity_fock_step = wigner_from_state(fock_state, xv, yv, sigma)
+    rho_out_fock, fidelity_fock_huber_step = wigner_from_state(fock_state, xv, yv, sigma, optimization_type='Huber')
+    # rho_out_coherent, fidelity_coherent_step = wigner_from_state(coherent_state, xv, yv, sigma)
+    # dq.plot.wigner(rho_out_coherent)
+    # rho_out_cat, fidelity_cat_step = wigner_from_state(cat_state, xv, yv, sigma)
+    # dq.plot.wigner(rho_out_cat)
+    fidelity_fock.append(fidelity_fock_step)
+    fidelity_fock_huber.append(fidelity_fock_huber_step)
+    # fidelity_coherent.append(fidelity_coherent_step)
+    # fidelity_cat.append(fidelity_cat_step)
     
-# fig, ax = plt.subplots()
-# ax.plot(jnp.linspace(0, 1, 10), fidelity_fock, c = 'green')
+fig, ax = plt.subplots()
+ax.scatter(sigmas, fidelity_fock, c = 'blue')
+ax.scatter(sigmas, fidelity_fock_huber, c = 'red')
+ax.set_xlabel('Noise [\sigma]')
+ax.set_ylabel('Fidelity')
+ax.set_title('Noise-Fidelity Plot for Fock State')
 # ax.plot(jnp.linspace(0, 1, 10), fidelity_coherent, c = 'blue')
 # ax.plot(jnp.linspace(0, 1, 10), fidelity_cat, c = 'red')
     
